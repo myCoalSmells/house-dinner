@@ -3,9 +3,10 @@
 We only consider MTWR
 Abraham: Cook on null, clean on MTWR
 Asher: Cook on MTWR, clean on MTWR
-Cal: Cook on MT, clean on MT
+Cal: Cook on TW, clean on TW
 Jachin: Cook on MW, clean on MTWR
 Jonathan: Cook on MW, clean MTWR
-Josh: Cook on TWR, clean on MTWR
+Josh: Cook on TR, clean on MTWR
 Josiah: Cook on MWR, clean on MTWR
 Victor: Cook on MTWR, clean on MTWR
+Enoch: Cook on MW, clean MWR

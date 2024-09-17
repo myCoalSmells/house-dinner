@@ -44,22 +44,27 @@ function generateTenWeekSchedule(participants, chosenDays) {
           p.cleanDays.includes(day)
         );
 
-        dinner.headChef = selectParticipant(
-          availableCooks,
-          taskCounts,
-          "cook",
-          targetTasksPerPerson
-        );
-        availableCooks.splice(
-          availableCooks.findIndex((p) => p.name === dinner.headChef),
-          1
-        );
-        dinner.assistantChef = selectParticipant(
-          availableCooks,
-          taskCounts,
-          "cook",
-          targetTasksPerPerson
-        );
+        const selectedCooks = [
+          selectParticipant(
+            availableCooks,
+            taskCounts,
+            "cook",
+            targetTasksPerPerson
+          ),
+          selectParticipant(
+            availableCooks,
+            taskCounts,
+            "cook",
+            targetTasksPerPerson
+          ),
+        ];
+
+        // Randomly assign head chef and assistant chef
+        if (Math.random() < 0.5) {
+          [dinner.headChef, dinner.assistantChef] = selectedCooks;
+        } else {
+          [dinner.assistantChef, dinner.headChef] = selectedCooks;
+        }
 
         dinner.cleaners = [
           selectParticipant(
