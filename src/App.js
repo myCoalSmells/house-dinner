@@ -8,7 +8,6 @@ import Tally from "./components/Tally";
 
 function App() {
   const [participants, setParticipants] = useState([]);
-  const [selectedDays, setSelectedDays] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [tally, setTally] = useState({});
   const [suggestedDays, setSuggestedDays] = useState([]);
