@@ -3,16 +3,16 @@ import React, { useState } from "react";
 function ParticipantForm({ onAddParticipant }) {
   const [name, setName] = useState("");
   const [cookDays, setCookDays] = useState({
-    M: false,
-    T: false,
-    W: false,
-    R: false,
+    M: true,
+    T: true,
+    W: true,
+    R: true,
   });
   const [cleanDays, setCleanDays] = useState({
-    M: false,
-    T: false,
-    W: false,
-    R: false,
+    M: true,
+    T: true,
+    W: true,
+    R: true,
   });
 
   const handleSubmit = (e) => {
@@ -23,8 +23,8 @@ function ParticipantForm({ onAddParticipant }) {
       cleanDays: Object.keys(cleanDays).filter((day) => cleanDays[day]),
     });
     setName("");
-    setCookDays({ M: false, T: false, W: false, R: false });
-    setCleanDays({ M: false, T: false, W: false, R: false });
+    setCookDays({ M: true, T: true, W: true, R: true });
+    setCleanDays({ M: true, T: true, W: true, R: true });
   };
 
   const handleCookDayChange = (day) => {

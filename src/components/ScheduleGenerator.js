@@ -1,10 +1,14 @@
 const ScheduleGenerator = {
-  generate: (participants) => {
+  generate: (participants, selectedDays = []) => {
     const days = ["M", "T", "W", "R"];
-    const chosenDays = selectBestDays(participants, days);
+    const { suggestedDays, chosenDays } = suggestAndSelectDays(
+      participants,
+      days,
+      selectedDays
+    );
     const generatedSchedule = generateTenWeekSchedule(participants, chosenDays);
     const tally = generateTally(generatedSchedule);
-    return { chosenDays, generatedSchedule, tally };
+    return { suggestedDays, chosenDays, generatedSchedule, tally };
   },
 };
 
@@ -22,6 +26,14 @@ function selectBestDays(participants, days) {
     .map(([day]) => day);
 }
 
+function suggestAndSelectDays(participants, days, selectedDays) {
+  const suggestedDays = selectBestDays(participants, days);
+  return {
+    suggestedDays,
+    chosenDays: selectedDays.length > 0 ? selectedDays : suggestedDays,
+  };
+}
+
 function generateTenWeekSchedule(participants, chosenDays) {
   const schedule = [];
   const taskCounts = participants.reduce(
@@ -30,7 +42,9 @@ function generateTenWeekSchedule(participants, chosenDays) {
   );
 
   const totalDinners = 10 * chosenDays.length;
-  const targetTasksPerPerson = (totalDinners * 4) / participants.length;
+  const regularParticipants = participants.filter((p) => p.name !== "Cal");
+  const targetTasksPerPerson =
+    (totalDinners * 4) / (regularParticipants.length + 0.5); // Accounting for Cal's half participation
 
   for (let week = 1; week <= 10; week++) {
     const weekSchedule = {
@@ -59,7 +73,6 @@ function generateTenWeekSchedule(participants, chosenDays) {
           ),
         ];
 
-        // Randomly assign head chef and assistant chef
         if (Math.random() < 0.5) {
           [dinner.headChef, dinner.assistantChef] = selectedCooks;
         } else {
@@ -103,8 +116,18 @@ function selectParticipant(
   const sortedParticipants = availableParticipants.sort((a, b) => {
     const aTotalTasks = taskCounts[a.name].cook + taskCounts[a.name].clean;
     const bTotalTasks = taskCounts[b.name].cook + taskCounts[b.name].clean;
-    if (aTotalTasks !== bTotalTasks) {
-      return aTotalTasks - bTotalTasks;
+
+    // Special handling for Cal
+    const aTarget =
+      a.name === "Cal" ? targetTasksPerPerson / 2 : targetTasksPerPerson;
+    const bTarget =
+      b.name === "Cal" ? targetTasksPerPerson / 2 : targetTasksPerPerson;
+
+    const aDiff = aTotalTasks - aTarget;
+    const bDiff = bTotalTasks - bTarget;
+
+    if (aDiff !== bDiff) {
+      return aDiff - bDiff;
     }
     return taskCounts[a.name][task] - taskCounts[b.name][task];
   });
