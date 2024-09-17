@@ -3,7 +3,7 @@
 We only consider MTWR
 Abraham: Cook on null, clean on MTWR
 Asher: Cook on MTWR, clean on MTWR
-Cal: Cook on TW, clean on TW
+Cal: Cook on W, clean on W
 Jachin: Cook on MW, clean on MTWR
 Jonathan: Cook on MW, clean MTWR
 Josh: Cook on TR, clean on MTWR
