@@ -4,21 +4,28 @@ import ParticipantForm from "./components/ParticipantForm";
 import ScheduleGenerator from "./components/ScheduleGenerator";
 import Schedule from "./components/Schedule";
 import ParticipantList from "./components/ParticipantList";
+import Tally from "./components/Tally";
 
 function App() {
   const [participants, setParticipants] = useState([]);
   const [selectedDays, setSelectedDays] = useState([]);
   const [schedule, setSchedule] = useState([]);
+  const [tally, setTally] = useState({});
 
   const addParticipant = (participant) => {
     setParticipants([...participants, participant]);
   };
 
   const generateSchedule = () => {
-    const { chosenDays, generatedSchedule } =
-      ScheduleGenerator.generate(participants);
-    setSelectedDays(chosenDays);
-    setSchedule(generatedSchedule);
+    try {
+      const { chosenDays, generatedSchedule, tally } =
+        ScheduleGenerator.generate(participants);
+      setSelectedDays(chosenDays);
+      setSchedule(generatedSchedule);
+      setTally(tally);
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
@@ -33,6 +40,7 @@ function App() {
         <p>Selected days for dinner: {selectedDays.join(", ")}</p>
       )}
       <Schedule schedule={schedule} />
+      <Tally tally={tally} />
     </div>
   );
 }

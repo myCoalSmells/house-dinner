@@ -3,12 +3,12 @@ const ScheduleGenerator = {
     const days = ["M", "T", "W", "R"];
     const chosenDays = selectBestDays(participants, days);
     const generatedSchedule = generateTenWeekSchedule(participants, chosenDays);
-    return { chosenDays, generatedSchedule };
+    const tally = generateTally(generatedSchedule);
+    return { chosenDays, generatedSchedule, tally };
   },
 };
 
 function selectBestDays(participants, days) {
-  // Count availability for each day
   const availability = days.reduce((acc, day) => {
     acc[day] = participants.filter(
       (p) => p.cookDays.includes(day) || p.cleanDays.includes(day)
@@ -16,7 +16,6 @@ function selectBestDays(participants, days) {
     return acc;
   }, {});
 
-  // Sort days by availability and select the top two
   return Object.entries(availability)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
@@ -25,31 +24,112 @@ function selectBestDays(participants, days) {
 
 function generateTenWeekSchedule(participants, chosenDays) {
   const schedule = [];
+  const taskCounts = participants.reduce(
+    (acc, p) => ({ ...acc, [p.name]: { cook: 0, clean: 0 } }),
+    {}
+  );
+
+  const totalDinners = 10 * chosenDays.length;
+  const targetTasksPerPerson = (totalDinners * 4) / participants.length;
+
   for (let week = 1; week <= 10; week++) {
     const weekSchedule = {
       weekNumber: week,
-      dinners: chosenDays.map((day) => ({
-        day,
-        headChef: selectParticipant(participants, "cook", day),
-        assistantChef: selectParticipant(participants, "cook", day),
-        cleaners: [
-          selectParticipant(participants, "clean", day),
-          selectParticipant(participants, "clean", day),
-        ],
-      })),
+      dinners: chosenDays.map((day) => {
+        const dinner = { day };
+        const availableCooks = participants.filter((p) =>
+          p.cookDays.includes(day)
+        );
+        const availableCleaners = participants.filter((p) =>
+          p.cleanDays.includes(day)
+        );
+
+        dinner.headChef = selectParticipant(
+          availableCooks,
+          taskCounts,
+          "cook",
+          targetTasksPerPerson
+        );
+        availableCooks.splice(
+          availableCooks.findIndex((p) => p.name === dinner.headChef),
+          1
+        );
+        dinner.assistantChef = selectParticipant(
+          availableCooks,
+          taskCounts,
+          "cook",
+          targetTasksPerPerson
+        );
+
+        dinner.cleaners = [
+          selectParticipant(
+            availableCleaners,
+            taskCounts,
+            "clean",
+            targetTasksPerPerson
+          ),
+          selectParticipant(
+            availableCleaners,
+            taskCounts,
+            "clean",
+            targetTasksPerPerson
+          ),
+        ];
+
+        return dinner;
+      }),
     };
     schedule.push(weekSchedule);
   }
+
   return schedule;
 }
 
-function selectParticipant(participants, role, day) {
-  const availableParticipants = participants.filter((p) =>
-    role === "cook" ? p.cookDays.includes(day) : p.cleanDays.includes(day)
-  );
-  return availableParticipants[
-    Math.floor(Math.random() * availableParticipants.length)
-  ].name;
+function selectParticipant(
+  availableParticipants,
+  taskCounts,
+  task,
+  targetTasksPerPerson
+) {
+  if (availableParticipants.length === 0) {
+    throw new Error(`Not enough participants available for ${task} task`);
+  }
+
+  const sortedParticipants = availableParticipants.sort((a, b) => {
+    const aTotalTasks = taskCounts[a.name].cook + taskCounts[a.name].clean;
+    const bTotalTasks = taskCounts[b.name].cook + taskCounts[b.name].clean;
+    if (aTotalTasks !== bTotalTasks) {
+      return aTotalTasks - bTotalTasks;
+    }
+    return taskCounts[a.name][task] - taskCounts[b.name][task];
+  });
+
+  const selected = sortedParticipants[0].name;
+  taskCounts[selected][task]++;
+  return selected;
+}
+
+function generateTally(schedule) {
+  const tally = {};
+
+  schedule.forEach((week) => {
+    week.dinners.forEach((dinner) => {
+      updateTally(tally, dinner.headChef, "cook");
+      updateTally(tally, dinner.assistantChef, "cook");
+      dinner.cleaners.forEach((cleaner) =>
+        updateTally(tally, cleaner, "clean")
+      );
+    });
+  });
+
+  return tally;
+}
+
+function updateTally(tally, name, task) {
+  if (!tally[name]) {
+    tally[name] = { cook: 0, clean: 0 };
+  }
+  tally[name][task]++;
 }
 
 export default ScheduleGenerator;
