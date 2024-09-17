@@ -3,9 +3,11 @@ import "./App.css";
 import ParticipantForm from "./components/ParticipantForm";
 import ScheduleGenerator from "./components/ScheduleGenerator";
 import Schedule from "./components/Schedule";
+import ParticipantList from "./components/ParticipantList";
 
 function App() {
   const [participants, setParticipants] = useState([]);
+  const [selectedDays, setSelectedDays] = useState([]);
   const [schedule, setSchedule] = useState([]);
 
   const addParticipant = (participant) => {
@@ -13,26 +15,24 @@ function App() {
   };
 
   const generateSchedule = () => {
-    const newSchedule = ScheduleGenerator.generate(participants);
-    setSchedule(newSchedule);
+    const { chosenDays, generatedSchedule } =
+      ScheduleGenerator.generate(participants);
+    setSelectedDays(chosenDays);
+    setSchedule(generatedSchedule);
   };
 
   return (
     <div className="App">
       <h1>House Dinner Schedule</h1>
       <ParticipantForm onAddParticipant={addParticipant} />
-      <button onClick={generateSchedule}>Generate Schedule</button>
+      <ParticipantList participants={participants} />
+      <button onClick={generateSchedule} disabled={participants.length === 0}>
+        Generate Schedule
+      </button>
+      {selectedDays.length > 0 && (
+        <p>Selected days for dinner: {selectedDays.join(", ")}</p>
+      )}
       <Schedule schedule={schedule} />
-      <div>
-        <h2>Participants</h2>
-        {participants.map((participant, index) => (
-          <div key={index}>
-            <p>{participant.name}</p>
-            <p>Cook on: {participant.cookDays.join(", ")}</p>
-            <p>Clean on: {participant.cleanDays.join(", ")}</p>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
