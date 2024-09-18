@@ -46,53 +46,68 @@ function generateTenWeekSchedule(participants, chosenDays) {
   const targetTasksPerPerson =
     (totalDinners * 4) / (regularParticipants.length + 0.5); // Accounting for Cal's half participation
 
+  // Generate all possible dinner slots for Cal
+  const calDinnerSlots = [];
+  for (let week = 1; week <= 10; week++) {
+    if (chosenDays.includes("W")) {
+      calDinnerSlots.push({ week, day: "W" });
+    }
+  }
+
+  // Randomly select 5 dinner slots for Cal
+  const calTargetDinners = 5;
+  const selectedCalDinnerSlots = new Set(
+    calDinnerSlots
+      .sort(() => 0.5 - Math.random())
+      .slice(0, calTargetDinners)
+      .map((slot) => JSON.stringify(slot))
+  );
+
   for (let week = 1; week <= 10; week++) {
     const weekSchedule = {
       weekNumber: week,
       dinners: chosenDays.map((day) => {
         const dinner = { day };
+        const isCalAvailable =
+          day === "W" &&
+          selectedCalDinnerSlots.has(JSON.stringify({ week, day }));
         const availableCooks = participants.filter((p) =>
-          p.cookDays.includes(day)
+          p.name === "Cal" ? isCalAvailable : p.cookDays.includes(day)
         );
         const availableCleaners = participants.filter((p) =>
-          p.cleanDays.includes(day)
+          p.name === "Cal" ? isCalAvailable : p.cleanDays.includes(day)
         );
 
-        const selectedCooks = [
-          selectParticipant(
-            availableCooks,
+        const selectedCooks = [];
+        for (let i = 0; i < 2; i++) {
+          const cook = selectParticipant(
+            availableCooks.filter((p) => !selectedCooks.includes(p.name)),
             taskCounts,
             "cook",
             targetTasksPerPerson
-          ),
-          selectParticipant(
-            availableCooks,
-            taskCounts,
-            "cook",
-            targetTasksPerPerson
-          ),
-        ];
-
-        if (Math.random() < 0.5) {
-          [dinner.headChef, dinner.assistantChef] = selectedCooks;
-        } else {
-          [dinner.assistantChef, dinner.headChef] = selectedCooks;
+          );
+          selectedCooks.push(cook);
         }
 
-        dinner.cleaners = [
-          selectParticipant(
-            availableCleaners,
+        dinner.headChef = selectedCooks[0];
+        dinner.assistantChef = selectedCooks[1];
+
+        const availableCleanersWithoutCooks = availableCleaners.filter(
+          (p) => !selectedCooks.includes(p.name)
+        );
+
+        dinner.cleaners = [];
+        for (let i = 0; i < 2; i++) {
+          const cleaner = selectParticipant(
+            availableCleanersWithoutCooks.filter(
+              (p) => !dinner.cleaners.includes(p.name)
+            ),
             taskCounts,
             "clean",
             targetTasksPerPerson
-          ),
-          selectParticipant(
-            availableCleaners,
-            taskCounts,
-            "clean",
-            targetTasksPerPerson
-          ),
-        ];
+          );
+          dinner.cleaners.push(cleaner);
+        }
 
         return dinner;
       }),
@@ -118,10 +133,8 @@ function selectParticipant(
     const bTotalTasks = taskCounts[b.name].cook + taskCounts[b.name].clean;
 
     // Special handling for Cal
-    const aTarget =
-      a.name === "Cal" ? targetTasksPerPerson / 2 : targetTasksPerPerson;
-    const bTarget =
-      b.name === "Cal" ? targetTasksPerPerson / 2 : targetTasksPerPerson;
+    const aTarget = a.name === "Cal" ? 5 : targetTasksPerPerson;
+    const bTarget = b.name === "Cal" ? 5 : targetTasksPerPerson;
 
     const aDiff = aTotalTasks - aTarget;
     const bDiff = bTotalTasks - bTarget;
